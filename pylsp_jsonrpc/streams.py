@@ -31,8 +31,7 @@ class JsonRpcStreamReader:
             except ValueError:
                 if self._rfile.closed:
                     return
-                else:
-                    log.exception("Failed to read from rfile")
+                log.exception("Failed to read from rfile")
 
             if request_str is None:
                 break

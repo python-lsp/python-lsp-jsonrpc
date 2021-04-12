@@ -179,8 +179,8 @@ class Endpoint:
         """Handle a request from the client."""
         try:
             handler = self._dispatcher[method]
-        except KeyError:
-            raise JsonRpcMethodNotFound.of(method)
+        except KeyError as e:
+            raise JsonRpcMethodNotFound.of(method) from e
 
         handler_result = handler(params)
 

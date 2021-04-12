@@ -2,9 +2,9 @@
 # pylint: disable=redefined-outer-name
 
 from concurrent import futures
-import pytest
 import time
 from unittest import mock
+import pytest
 
 from pylsp_jsonrpc import exceptions
 from pylsp_jsonrpc.endpoint import Endpoint
