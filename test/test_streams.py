@@ -5,7 +5,6 @@
 
 from io import BytesIO
 import datetime
-import os
 import sys
 from unittest import mock
 import pytest
