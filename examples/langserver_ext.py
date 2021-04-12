@@ -20,11 +20,11 @@ class LanguageServerWebSocketHandler(websocket.WebSocketHandler):
     writer = None
 
     def open(self, *args, **kwargs):
-        log.info("Spawning pyls subprocess")
+        log.info("Spawning pylsp subprocess")
 
         # Create an instance of the language server
         proc = process.Subprocess(
-            ['pyls', '-v'],
+            ['pylsp', '-v'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE
         )
