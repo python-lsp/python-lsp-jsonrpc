@@ -4,7 +4,7 @@ import threading
 
 from tornado import ioloop, process, web, websocket
 
-from pyls_jsonrpc import streams
+from pylsp_jsonrpc import streams
 
 try:
     import ujson as json

@@ -1,54 +1,45 @@
 #!/usr/bin/env python
+
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
+import ast
+import os
 from setuptools import find_packages, setup
-import sys
-import versioneer
 
-README = open('README.rst', 'r').read()
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 
-install_requires = [
-    'future>=0.14.0; python_version<"3"',
-    'futures; python_version<"3.2"',
-]
+def get_version(module='pylsp_jsonrpc'):
+    """Get version."""
+    with open(os.path.join(HERE, module, '__init__.py'), 'r') as f:
+        data = f.read()
+    lines = data.split('\n')
+    for line in lines:
+        if line.startswith('VERSION_INFO'):
+            version_tuple = ast.literal_eval(line.split('=')[-1].strip())
+            version = '.'.join(map(str, version_tuple))
+            break
+    return version
 
-if sys.version_info[0] == 2:
-    install_requires.append('ujson<=2.0.3; platform_system!="Windows"')
-else:
-    install_requires.append('ujson>=3.0.0')
+
+README = open('README.md', 'r').read()
+
 
 setup(
-    name='python-jsonrpc-server',
-
-    # Versions should comply with PEP440.  For a discussion on single-sourcing
-    # the version across setup.py and the project code, see
-    # https://packaging.python.org/en/latest/single_source_version.html
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
-
+    name='python-lsp-jsonrpc',
+    version=get_version(),
     description='JSON RPC 2.0 server library',
-
     long_description=README,
-
-    # The project's main homepage.
-    url='https://github.com/palantir/python-jsonrpc-server',
-
-    author='Palantir Technologies, Inc.',
-
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
+    long_description_content_type='text/markdown',
+    url='https://github.com/python-lsp/python-lsp-jsonrpc',
+    author='Python Language Server Contributors',
     packages=find_packages(exclude=['contrib', 'docs', 'test']),
-
-    # List run-time dependencies here.  These will be installed by pip when
-    # your project is installed. For an analysis of "install_requires" vs pip's
-    # requirements files see:
-    # https://packaging.python.org/en/latest/requirements.html
-    install_requires=install_requires,
-
-    # List additional groups of dependencies here (e.g. development
-    # dependencies). You can install these using the following syntax,
-    # for example:
-    # $ pip install -e .[test]
+    install_requires=[
+        'ujson>=3.0.0',
+    ],
     extras_require={
-        'test': ['versioneer', 'pylint', 'pycodestyle', 'pyflakes', 'pytest', 'mock', 'pytest-cov', 'coverage'],
+        'test': ['pylint', 'pycodestyle', 'pyflakes', 'pytest',
+                 'pytest-cov', 'coverage'],
     },
 )

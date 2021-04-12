@@ -1,13 +1,16 @@
-# Copyright 2018 Palantir Technologies, Inc.
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
 # pylint: disable=redefined-outer-name
+
 from io import BytesIO
 import datetime
 import os
 import sys
-import mock
+from unittest import mock
 import pytest
 
-from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
+from pylsp_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
 
 @pytest.fixture()

@@ -1,17 +1,20 @@
-# Copyright 2018 Palantir Technologies, Inc.
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
 import logging
 import uuid
 import sys
 
 from concurrent import futures
-from .exceptions import JsonRpcException, JsonRpcRequestCancelled, JsonRpcInternalError, JsonRpcMethodNotFound
+from .exceptions import (JsonRpcException, JsonRpcRequestCancelled,
+                         JsonRpcInternalError, JsonRpcMethodNotFound)
 
 log = logging.getLogger(__name__)
 JSONRPC_VERSION = '2.0'
 CANCEL_METHOD = '$/cancelRequest'
 
 
-class Endpoint(object):
+class Endpoint:
 
     def __init__(self, dispatcher, consumer, id_generator=lambda: str(uuid.uuid4()), max_workers=5):
         """A JSON RPC endpoint for managing messages sent to/from the client.
