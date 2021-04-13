@@ -12,7 +12,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def get_version(module='pylsp_jsonrpc'):
     """Get version."""
-    with open(os.path.join(HERE, module, '__init__.py'), 'r') as f:
+    with open(os.path.join(HERE, module, '_version.py'), 'r') as f:
         data = f.read()
     lines = data.split('\n')
     for line in lines:
