@@ -1,0 +1,2 @@
+[run]
+omit = pylsp_jsonrpc/_version.py
