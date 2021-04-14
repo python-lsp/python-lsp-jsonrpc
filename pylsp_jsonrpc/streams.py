@@ -1,4 +1,6 @@
-# Copyright 2018 Palantir Technologies, Inc.
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
 import logging
 import threading
 
@@ -10,8 +12,7 @@ except Exception:  # pylint: disable=broad-except
 log = logging.getLogger(__name__)
 
 
-class JsonRpcStreamReader(object):
-
+class JsonRpcStreamReader:
     def __init__(self, rfile):
         self._rfile = rfile
 
@@ -30,8 +31,7 @@ class JsonRpcStreamReader(object):
             except ValueError:
                 if self._rfile.closed:
                     return
-                else:
-                    log.exception("Failed to read from rfile")
+                log.exception("Failed to read from rfile")
 
             if request_str is None:
                 break
@@ -73,14 +73,13 @@ class JsonRpcStreamReader(object):
             value = value.strip()
             try:
                 return int(value)
-            except ValueError:
-                raise ValueError("Invalid Content-Length header: {}".format(value))
+            except ValueError as e:
+                raise ValueError("Invalid Content-Length header: {}".format(value)) from e
 
         return None
 
 
-class JsonRpcStreamWriter(object):
-
+class JsonRpcStreamWriter:
     def __init__(self, wfile, **json_dumps_args):
         self._wfile = wfile
         self._wfile_lock = threading.Lock()

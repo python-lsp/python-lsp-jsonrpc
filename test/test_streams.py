@@ -1,13 +1,15 @@
-# Copyright 2018 Palantir Technologies, Inc.
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
 # pylint: disable=redefined-outer-name
+
 from io import BytesIO
 import datetime
-import os
 import sys
-import mock
+from unittest import mock
 import pytest
 
-from pyls_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
+from pylsp_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
 
 @pytest.fixture()
@@ -81,20 +83,12 @@ def test_writer(wfile, writer):
         'params': {}
     })
 
-    if os.name == 'nt':
-        assert wfile.getvalue() == (
-            b'Content-Length: 49\r\n'
-            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-            b'\r\n'
-            b'{"id": "hello", "method": "method", "params": {}}'
-        )
-    else:
-        assert wfile.getvalue() == (
-            b'Content-Length: 44\r\n'
-            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-            b'\r\n'
-            b'{"id":"hello","method":"method","params":{}}'
-        )
+    assert wfile.getvalue() == (
+        b'Content-Length: 44\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'{"id":"hello","method":"method","params":{}}'
+    )
 
 
 class JsonDatetime(datetime.datetime):
@@ -126,5 +120,9 @@ def test_writer_bad_message(wfile, writer):
         b'Content-Length: 10\r\n'
         b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
         b'\r\n'
-        b'1546304461'
+        b'1546304461',
+        b'Content-Length: 10\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'1546322461'
     ]

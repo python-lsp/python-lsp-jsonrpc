@@ -1,6 +1,5 @@
 include README.rst
-include versioneer.py
-include pyls_jsonrpc/_version.py
 include LICENSE
 include .pylintrc
+include pylsp_jsonrpc/_version.py
 recursive-include test *.py

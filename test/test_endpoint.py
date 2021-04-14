@@ -1,12 +1,13 @@
 # Copyright 2018 Palantir Technologies, Inc.
 # pylint: disable=redefined-outer-name
+
 from concurrent import futures
 import time
-import mock
+from unittest import mock
 import pytest
 
-from pyls_jsonrpc import exceptions
-from pyls_jsonrpc.endpoint import Endpoint
+from pylsp_jsonrpc import exceptions
+from pylsp_jsonrpc.endpoint import Endpoint
 
 MSG_ID = 'id'
 
