@@ -4,13 +4,13 @@ A Python 3.6+ server implementation of the [JSON RPC 2.0](http://www.jsonrpc.org
 
 ## Installation
 
-    pip install -U python-jsonrpc-server
+    pip install -U python-lsp-jsonrpc
 
 ## Examples
 
 The examples directory contains two examples of running language servers over websockets. `examples/langserver.py` shows how to run a language server in-memory. `examples/langserver_ext.py` shows how to run a subprocess language server, in this case the Python LSP Server.
 
-Start by installing `tornado` and `python-language-server`
+Start by installing `tornado` and `python-lsp-server`
 
     pip install python-lsp-server[all] tornado
 
