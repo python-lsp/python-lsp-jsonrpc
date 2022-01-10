@@ -16,7 +16,7 @@ class MethodDispatcher:
     """
 
     def __getitem__(self, item):
-        method_name = 'm_{}'.format(_method_to_string(item))
+        method_name = f'm_{_method_to_string(item)}'
         if hasattr(self, method_name):
             method = getattr(self, method_name)
 

@@ -98,7 +98,7 @@ class JsonDatetime(datetime.datetime):
             dif = int(self.timestamp())
         else:
             dif = int((self - datetime.datetime(1970, 1, 1)).total_seconds())
-        return '{0}'.format(dif)
+        return f'{dif}'
 
 
 def test_writer_bad_message(wfile, writer):
