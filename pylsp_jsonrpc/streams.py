@@ -74,7 +74,7 @@ class JsonRpcStreamReader:
             try:
                 return int(value)
             except ValueError as e:
-                raise ValueError("Invalid Content-Length header: {}".format(value)) from e
+                raise ValueError(f"Invalid Content-Length header: {value}") from e
 
         return None
 
@@ -100,9 +100,9 @@ class JsonRpcStreamWriter:
                 content_length = len(body) if isinstance(body, bytes) else len(body.encode('utf-8'))
 
                 response = (
-                    "Content-Length: {}\r\n"
-                    "Content-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n"
-                    "{}".format(content_length, body)
+                    f"Content-Length: {content_length}\r\n"
+                    f"Content-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n"
+                    f"{body}"
                 )
 
                 self._wfile.write(response.encode('utf-8'))
