@@ -30,6 +30,8 @@ setup(
     name='python-lsp-jsonrpc',
     version=get_version(),
     description='JSON RPC 2.0 server library',
+    license="MIT",
+    license_file="LICENSE",
     long_description=README,
     long_description_content_type='text/markdown',
     url='https://github.com/python-lsp/python-lsp-jsonrpc',
