@@ -76,6 +76,53 @@ def test_reader_bad_json(rfile, reader):
     consumer.assert_not_called()
 
 
+@pytest.mark.asyncio
+async def test_reader_async(rfile, reader):
+    rfile.write(
+        b'Content-Length: 49\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'{"id": "hello", "method": "method", "params": {}}'
+    )
+    rfile.seek(0)
+
+    consumer = mock.AsyncMock()
+    await reader.listen_async(consumer)
+
+    consumer.assert_called_once_with({
+        'id': 'hello',
+        'method': 'method',
+        'params': {}
+    })
+
+
+@pytest.mark.asyncio
+async def test_reader_bad_message_async(rfile, reader):
+    rfile.write(b'Hello world')
+    rfile.seek(0)
+
+    # Ensure the listener doesn't throw
+    consumer = mock.AsyncMock()
+    await reader.listen_async(consumer)
+    consumer.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_reader_bad_json_async(rfile, reader):
+    rfile.write(
+        b'Content-Length: 8\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'{hello}}'
+    )
+    rfile.seek(0)
+
+    # Ensure the listener doesn't throw
+    consumer = mock.AsyncMock()
+    await reader.listen_async(consumer)
+    consumer.assert_not_called()
+
+
 def test_writer(wfile, writer):
     writer.write({
         'id': 'hello',
@@ -124,5 +171,9 @@ def test_writer_bad_message(wfile, writer):
         b'Content-Length: 10\r\n'
         b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
         b'\r\n'
-        b'1546322461'
+        b'1546322461',
+        b'Content-Length: 10\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'1546300861'
     ]

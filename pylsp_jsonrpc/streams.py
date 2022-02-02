@@ -3,6 +3,7 @@
 
 import logging
 import threading
+import asyncio
 
 try:
     import ujson as json
@@ -64,6 +65,30 @@ class JsonRpcStreamReader:
 
         # Grab the body
         return self._rfile.read(content_length)
+
+    async def listen_async(self, message_consumer):
+        """Blocking call to listen for messages on the rfile.
+
+        Args:
+            message_consumer (fn): function that is passed each message as it is read off the socket.
+        """
+
+        while not self._rfile.closed:
+            try:
+                request_str = await asyncio.to_thread(self._read_message)
+            except ValueError:
+                if self._rfile.closed:
+                    return
+                log.exception("Failed to read from rfile")
+
+            if request_str is None:
+                break
+
+            try:
+                await message_consumer(json.loads(request_str.decode('utf-8')))
+            except ValueError:
+                log.exception("Failed to parse JSON message %s", request_str)
+                continue
 
     @staticmethod
     def _content_length(line):

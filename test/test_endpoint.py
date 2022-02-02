@@ -10,7 +10,7 @@ from pylsp_jsonrpc import exceptions
 from pylsp_jsonrpc.endpoint import Endpoint
 
 MSG_ID = 'id'
-
+EXIT_METHOD = 'exit'
 
 @pytest.fixture()
 def dispatcher():
@@ -318,6 +318,60 @@ def test_consume_request_cancel_unknown(endpoint):
         'params': {'id': 'unknown identifier'}
     })
 
+
+@pytest.mark.asyncio
+async def test_consume_async_request_cancel(endpoint, dispatcher, consumer):
+    def async_handler():
+        time.sleep(1)
+    handler = mock.Mock(return_value=async_handler)
+    dispatcher['methodName'] = handler
+
+    endpoint.init_async()
+
+    await endpoint.consume_async({
+        'jsonrpc': '2.0',
+        'method': 'methodName',
+        'params': {'key': 'value'}
+    })
+    await endpoint.consume_async({
+        'jsonrpc': '2.0',
+        'id': MSG_ID,
+        'method': 'methodName',
+        'params': {'key': 'value'}
+    })
+    await endpoint.consume_async({
+        'jsonrpc': '2.0',
+        'method': '$/cancelRequest',
+        'params': {'id': MSG_ID}
+    })
+
+    await endpoint._messageQueue.join()
+
+    consumer.assert_called_once_with({
+        'jsonrpc': '2.0',
+        'id': MSG_ID,
+        'error': exceptions.JsonRpcRequestCancelled().to_dict()
+    })
+
+    endpoint.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_consume_async_exit(endpoint, dispatcher, consumer):
+    # verify that exit is still called synchronously
+    handler = mock.Mock()
+    dispatcher[EXIT_METHOD] = handler
+
+    endpoint.init_async()
+
+    await endpoint.consume_async({
+        'jsonrpc': '2.0',
+        'method': EXIT_METHOD
+    })
+
+    handler.assert_called_once_with(None)
+
+    endpoint.shutdown()
 
 def assert_consumer_error(consumer_mock, exception):
     """Assert that the consumer mock has had once call with the given error message and code.
