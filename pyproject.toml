@@ -1,7 +1,45 @@
+# Copyright 2017-2020 Palantir Technologies, Inc.
+# Copyright 2021- Python Language Server Contributors.
+
 [build-system]
-requires = ["setuptools>=44", "wheel", "setuptools_scm[toml]>=3.4.3"]
+requires = ["setuptools>=61.2.0", "wheel", "setuptools_scm[toml]>=3.4.3"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-lsp-jsonrpc"
+authors = [{name = "Python Language Server Contributors"}]
+description = "JSON RPC 2.0 server library"
+dependencies = ["ujson>=3.0.0"]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/python-lsp/python-lsp-jsonrpc"
+
+[project.optional-dependencies]
+test = [
+    "pylint",
+    "pycodestyle",
+    "pyflakes",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["contrib", "docs", "test", "test.*"]
+namespaces = false
 
 [tool.setuptools_scm]
 write_to = "pylsp_jsonrpc/_version.py"
 write_to_template = "__version__ = \"{version}\"\n"  # VERSION_INFO is populated in __main__
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+addopts = "--cov-report html --cov-report term --junitxml=pytest.xml --cov pylsp_jsonrpc --cov test"
