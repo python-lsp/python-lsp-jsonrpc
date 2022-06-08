@@ -4,6 +4,7 @@
 import logging
 import uuid
 import sys
+import asyncio
 
 from concurrent import futures
 from .exceptions import (JsonRpcException, JsonRpcRequestCancelled,
@@ -12,6 +13,7 @@ from .exceptions import (JsonRpcException, JsonRpcRequestCancelled,
 log = logging.getLogger(__name__)
 JSONRPC_VERSION = '2.0'
 CANCEL_METHOD = '$/cancelRequest'
+EXIT_METHOD = 'exit'
 
 
 class Endpoint:
@@ -35,9 +37,24 @@ class Endpoint:
         self._client_request_futures = {}
         self._server_request_futures = {}
         self._executor_service = futures.ThreadPoolExecutor(max_workers=max_workers)
+        self._cancelledRequests = set()
+        self._messageQueue = None
+        self._consume_task = None
+
+    def init_async(self):
+        self._messageQueue = asyncio.Queue()
+        self._consume_task = asyncio.create_task(self.consume_task())
+
+    async def consume_task(self):
+        while self._consume_task is not None and not self._consume_task.cancelled():
+            message = await self._messageQueue.get()
+            await asyncio.to_thread(self.consume, message)
+            self._messageQueue.task_done()
 
     def shutdown(self):
         self._executor_service.shutdown()
+        if self._consume_task is not None:
+            self._consume_task.cancel()
 
     def notify(self, method, params=None):
         """Send a JSON RPC notification to the client.
@@ -93,6 +110,21 @@ class Endpoint:
                 self.notify(CANCEL_METHOD, {'id': request_id})
                 future.set_exception(JsonRpcRequestCancelled())
         return callback
+
+    async def consume_async(self, message):
+        """Consume a JSON RPC message from the client and put it into a queue.
+
+        Args:
+            message (dict): The JSON RPC message sent by the client
+        """
+        if message['method'] == CANCEL_METHOD:
+            self._cancelledRequests.add(message.get('params')['id'])
+
+        # The exit message needs to be handled directly since the stream cannot be closed asynchronously
+        if message['method'] == EXIT_METHOD:
+            self.consume(message)
+        else:
+            await self._messageQueue.put(message)
 
     def consume(self, message):
         """Consume a JSON RPC message from the client.
@@ -181,6 +213,9 @@ class Endpoint:
             handler = self._dispatcher[method]
         except KeyError as e:
             raise JsonRpcMethodNotFound.of(method) from e
+
+        if msg_id in self._cancelledRequests:
+            raise JsonRpcRequestCancelled()
 
         handler_result = handler(params)
 
