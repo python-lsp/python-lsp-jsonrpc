@@ -10,7 +10,7 @@ name = "python-lsp-jsonrpc"
 authors = [{name = "Python Language Server Contributors"}]
 description = "JSON RPC 2.0 server library"
 license = {text = "MIT"}
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = ["ujson>=3.0.0"]
 dynamic = ["version"]
 
