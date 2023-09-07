@@ -177,13 +177,11 @@ class Endpoint:
             log.debug("Cancelled request with id %s", msg_id)
 
     @staticmethod
-    def _make_response_payload(
-        header: Dict[str, Any], result: Dict[str, Any]
-    ) -> Mapping[str, Any]:
+    def _make_response_payload(header: Dict[str, Any], result: Any) -> Mapping[str, Any]:
         # return type of 'Mapping' because it should not be mutated
         # further from here
         response = dict(header)
-        if 'result' in result or 'error' in result:
+        if isinstance(result, dict) and ('result' in result or 'error' in result):
             response.update(result)
         else:
             response['result'] = result
