@@ -4,6 +4,7 @@
 import logging
 import uuid
 import sys
+from typing import Any, Dict, Mapping
 
 from concurrent import futures
 from .exceptions import (JsonRpcException, JsonRpcRequestCancelled,
@@ -175,6 +176,19 @@ class Endpoint:
         if request_future.cancel():
             log.debug("Cancelled request with id %s", msg_id)
 
+    @staticmethod
+    def _make_response_payload(
+        header: Dict[str, Any], result: Dict[str, Any]
+    ) -> Mapping[str, Any]:
+        # return type of 'Mapping' because it should not be mutated
+        # further from here
+        response = dict(header)
+        if 'result' in result or 'error' in result:
+            response.update(result)
+        else:
+            response['result'] = result
+        return response
+
     def _handle_request(self, msg_id, method, params):
         """Handle a request from the client."""
         try:
@@ -195,16 +209,13 @@ class Endpoint:
             handler_result.add_done_callback(self._request_callback(msg_id))
         else:
             log.debug("Got result from synchronous request handler: %s", handler_result)
-            response = {
-                'jsonrpc': JSONRPC_VERSION,
-                'id': msg_id,
-            }
-            if 'result' in handler_result:
-                response['result'] = handler_result['result']
-            if 'error' in handler_result:
-                response['error'] = handler_result['error']
-            if 'result' not in handler_result and 'error' not in handler_result:
-                response['result'] = handler_result
+            response = self._make_response_payload(
+                {
+                    'jsonrpc': JSONRPC_VERSION,
+                    'id': msg_id,
+                },
+                handler_result,
+            )
             self._consumer(response)
 
     def _request_callback(self, request_id):
@@ -223,12 +234,7 @@ class Endpoint:
 
             try:
                 result = future.result()
-                if 'result' in result:
-                    message['result'] = result['result']
-                if 'error' in result:
-                    message['error'] = result['error']
-                if 'result' not in result and 'error' not in result:
-                    message['result'] = result
+                message = self._make_response_payload(message, result)
             except JsonRpcException as e:
                 log.exception("Failed to handle request %s", request_id)
                 message['error'] = e.to_dict()
