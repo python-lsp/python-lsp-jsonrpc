@@ -1,6 +1,28 @@
 # History of changes
 
+## Version 1.1.1 (2023/09/09)
+
+### Issues Closed
+
+* [Issue 18](https://github.com/python-lsp/python-lsp-jsonrpc/issues/18) - No license included in package metadata ([PR 19](https://github.com/python-lsp/python-lsp-jsonrpc/pull/19) by [@thejcannon](https://github.com/thejcannon))
+
+In this release 1 issue was closed.
+
+### Pull Requests Merged
+
+* [PR 23](https://github.com/python-lsp/python-lsp-jsonrpc/pull/23) - Remove redundant wheel dep from pyproject.toml, by [@mgorny](https://github.com/mgorny)
+* [PR 19](https://github.com/python-lsp/python-lsp-jsonrpc/pull/19) - Add license trove classifier, by [@thejcannon](https://github.com/thejcannon) ([18](https://github.com/python-lsp/python-lsp-jsonrpc/issues/18))
+
+In this release 2 pull requests were closed.
+
+----
+
 ## Version 1.1.0 (2023/09/07)
+
+## New features
+
+* Allow method handlers to return json rpc errors
+* Drop support for Python 3.7 and 3.6
 
 ### Issues Closed
 
