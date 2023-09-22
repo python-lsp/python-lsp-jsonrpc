@@ -82,13 +82,20 @@ def test_writer(wfile, writer):
         'method': 'method',
         'params': {}
     })
-
-    assert wfile.getvalue() == (
-        b'Content-Length: 44\r\n'
-        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-        b'\r\n'
-        b'{"id":"hello","method":"method","params":{}}'
-    )
+    if 'ujson' in sys.modules:
+        assert wfile.getvalue() == (
+            b'Content-Length: 44\r\n'
+            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+            b'\r\n'
+            b'{"id":"hello","method":"method","params":{}}'
+        )
+    else:
+        assert wfile.getvalue() == (
+            b'Content-Length: 49\r\n'
+            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+            b'\r\n'
+            b'{"id": "hello", "method": "method", "params": {}}'
+        )
 
 
 class JsonDatetime(datetime.datetime):
