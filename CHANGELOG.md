@@ -1,5 +1,15 @@
 # History of changes
 
+## Version 1.1.2 (2023/09/23)
+
+### Pull Requests Merged
+
+* [PR 26](https://github.com/python-lsp/python-lsp-jsonrpc/pull/26) - Fix tests so they're compatible with both ujson and pure json library, by [@ajohnston9](https://github.com/ajohnston9)
+
+In this release 1 pull request was closed.
+
+----
+
 ## Version 1.1.1 (2023/09/09)
 
 ### Issues Closed
