@@ -5,8 +5,8 @@ from tornado import web, ioloop, websocket
 from pylsp_jsonrpc import dispatchers, endpoint
 
 try:
-    import ujson as json
-except Exception:  # pylint: disable=broad-except
+    import orjson as json
+except ImportError:
     import json
 
 log = logging.getLogger(__name__)

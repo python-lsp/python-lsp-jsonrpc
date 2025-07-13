@@ -3,10 +3,11 @@
 
 import logging
 import threading
+import sys
 
 try:
-    import ujson as json
-except Exception:  # pylint: disable=broad-except
+    import orjson as json
+except ImportError:
     import json
 
 log = logging.getLogger(__name__)
@@ -83,7 +84,16 @@ class JsonRpcStreamWriter:
     def __init__(self, wfile, **json_dumps_args):
         self._wfile = wfile
         self._wfile_lock = threading.Lock()
-        self._json_dumps_args = json_dumps_args
+
+        if 'orjson' in sys.modules and json_dumps_args.pop('sort_keys'):
+            # orjson needs different option handling;
+            # pylint has an erroneous error here https://github.com/pylint-dev/pylint/issues/9762
+            self._json_dumps_args = {'option': json.OPT_SORT_KEYS}  # pylint: disable=maybe-no-member
+            self._json_dumps_args.update(**json_dumps_args)
+        else:
+            self._json_dumps_args = json_dumps_args
+            # omit unnecessary whitespace for consistency with orjson
+            self._json_dumps_args.setdefault('separators', (',', ':'))
 
     def close(self):
         with self._wfile_lock:
@@ -96,16 +106,16 @@ class JsonRpcStreamWriter:
             try:
                 body = json.dumps(message, **self._json_dumps_args)
 
-                # Ensure we get the byte length, not the character length
-                content_length = len(body) if isinstance(body, bytes) else len(body.encode('utf-8'))
+                # orjson gives bytes, builtin json gives str. ensure we have bytes
+                body_bytes = body if isinstance(body, bytes) else body.encode('utf-8')
 
                 response = (
-                    f"Content-Length: {content_length}\r\n"
-                    f"Content-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n"
-                    f"{body}"
-                )
+                    b"Content-Length: %(length)i\r\n"
+                    b"Content-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n"
+                    b"%(body)s"
+                ) % {b'length': len(body_bytes), b'body': body_bytes}
 
-                self._wfile.write(response.encode('utf-8'))
+                self._wfile.write(response)
                 self._wfile.flush()
             except Exception:  # pylint: disable=broad-except
                 log.exception("Failed to write message to output file %s", message)

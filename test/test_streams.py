@@ -7,6 +7,7 @@ from io import BytesIO
 import datetime
 import sys
 from unittest import mock
+import json
 import pytest
 
 from pylsp_jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
@@ -77,25 +78,48 @@ def test_reader_bad_json(rfile, reader):
 
 
 def test_writer(wfile, writer):
-    writer.write({
+    data = {
         'id': 'hello',
         'method': 'method',
         'params': {}
-    })
-    if 'ujson' in sys.modules:
-        assert wfile.getvalue() == (
-            b'Content-Length: 44\r\n'
-            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-            b'\r\n'
-            b'{"id":"hello","method":"method","params":{}}'
-        )
-    else:
-        assert wfile.getvalue() == (
-            b'Content-Length: 49\r\n'
-            b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-            b'\r\n'
-            b'{"id": "hello", "method": "method", "params": {}}'
-        )
+    }
+    writer.write(data)
+
+    assert wfile.getvalue() == (
+        b'Content-Length: 44\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'{"id":"hello","method":"method","params":{}}'
+    )
+
+
+def test_writer_stdlib_json(wfile):
+    """Test the stream writer using the standard json lib."""
+    data = {
+        'id': 'hello',
+        'method': 'method',
+        'params': {}
+    }
+    orig_modules = sys.modules
+    try:
+        # Pretend orjson wasn't imported when initializing the writer.
+        sys.modules = {'json': json}
+        std_json_writer = JsonRpcStreamWriter(wfile, sort_keys=True)
+    finally:
+        sys.modules = orig_modules
+
+    with mock.patch('pylsp_jsonrpc.streams.json') as streams_json:
+        # Mock the imported json's dumps function to use the stdlib's dumps,
+        # whether orjson is available or not.
+        streams_json.dumps = json.dumps
+        std_json_writer.write(data)
+
+    assert wfile.getvalue() == (
+        b'Content-Length: 44\r\n'
+        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
+        b'\r\n'
+        b'{"id":"hello","method":"method","params":{}}'
+    )
 
 
 class JsonDatetime(datetime.datetime):
