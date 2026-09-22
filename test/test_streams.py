@@ -99,7 +99,7 @@ def test_writer(wfile, writer):
 
 
 class JsonDatetime(datetime.datetime):
-    """Monkey path json datetime."""
+    """Datetime with a custom JSON representation for ujson."""
     def __json__(self):
         if sys.version_info.major == 3:
             dif = int(self.timestamp())
@@ -112,14 +112,14 @@ def test_writer_bad_message(wfile, writer):
     # A datetime isn't serializable(or poorly serializable),
     # ensure the write method doesn't throw, but the result could be empty
     # or the correct datetime
-    datetime.datetime = JsonDatetime
-    writer.write(datetime.datetime(
+    writer.write(JsonDatetime(
         year=2019,
         month=1,
         day=1,
         hour=1,
         minute=1,
         second=1,
+        tzinfo=datetime.timezone.utc,
     ))
 
     assert wfile.getvalue() in [
@@ -127,9 +127,5 @@ def test_writer_bad_message(wfile, writer):
         b'Content-Length: 10\r\n'
         b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
         b'\r\n'
-        b'1546304461',
-        b'Content-Length: 10\r\n'
-        b'Content-Type: application/vscode-jsonrpc; charset=utf8\r\n'
-        b'\r\n'
-        b'1546322461'
+        b'1546304461'
     ]
