@@ -53,10 +53,11 @@ class JsonRpcStreamReader:
         if not line:
             return None
 
-        content_length = self._content_length(line)
+        content_length = None
 
-        # Blindly consume all header lines
         while line and line.strip():
+            if content_length is None:
+                content_length = self._content_length(line)
             line = self._rfile.readline()
 
         if not line:
@@ -68,8 +69,8 @@ class JsonRpcStreamReader:
     @staticmethod
     def _content_length(line):
         """Extract the content length from an input line."""
-        if line.startswith(b'Content-Length: '):
-            _, value = line.split(b'Content-Length: ')
+        header, separator, value = line.partition(b': ')
+        if separator and header.lower() == b'content-length':
             value = value.strip()
             try:
                 return int(value)

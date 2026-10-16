@@ -51,6 +51,42 @@ def test_reader(rfile, reader):
     })
 
 
+def test_reader_accepts_content_length_in_any_header_position_and_case(rfile, reader):
+    first_body = b'{"jsonrpc":"2.0","method":"first"}'
+    second_body = b'{"jsonrpc":"2.0","method":"second"}'
+    third_body = b'{"jsonrpc":"2.0","method":"third"}'
+    first_frame = b''.join((
+        b'Content-Type: application/vscode-jsonrpc; charset=utf-8\r\n',
+        b'Content-Length: ',
+        str(len(first_body)).encode('ascii'),
+        b'\r\n\r\n',
+        first_body,
+    ))
+    second_frame = b''.join((
+        b'cOnTeNt-LeNgTh: ',
+        str(len(second_body)).encode('ascii'),
+        b'\r\n\r\n',
+        second_body,
+    ))
+    third_frame = b''.join((
+        b'Content-Length: ',
+        str(len(third_body)).encode('ascii'),
+        b'\r\n\r\n',
+        third_body,
+    ))
+    rfile.write(first_frame + second_frame + third_frame)
+    rfile.seek(0)
+
+    consumer = mock.Mock()
+    reader.listen(consumer)
+
+    assert consumer.call_args_list == [
+        mock.call({'jsonrpc': '2.0', 'method': 'first'}),
+        mock.call({'jsonrpc': '2.0', 'method': 'second'}),
+        mock.call({'jsonrpc': '2.0', 'method': 'third'}),
+    ]
+
+
 def test_reader_bad_message(rfile, reader):
     rfile.write(b'Hello world')
     rfile.seek(0)
