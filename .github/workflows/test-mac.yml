@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     name: Mac Py${{ matrix.PYTHON_VERSION }}
-    runs-on: macos-13
+    runs-on: macos-15-intel
     env:
       CI: 'true'
       OS: 'macos'
