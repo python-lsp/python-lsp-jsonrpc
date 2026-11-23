@@ -9,7 +9,7 @@ class JsonRpcException(Exception):
     def __init__(self, message=None, code=None, data=None):
         super().__init__(message)
         self.message = message or getattr(self.__class__, 'MESSAGE')
-        self.code = code or getattr(self.__class__, 'CODE')
+        self.code = getattr(self.__class__, 'CODE') if code is None else code
         self.data = data
 
     def to_dict(self):
@@ -69,7 +69,7 @@ class JsonRpcInvalidParams(JsonRpcException):
 
 
 class JsonRpcInternalError(JsonRpcException):
-    CODE = -32602
+    CODE = -32603
     MESSAGE = 'Internal Error'
 
     @classmethod
