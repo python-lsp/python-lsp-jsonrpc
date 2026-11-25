@@ -63,7 +63,18 @@ class JsonRpcStreamReader:
             return None
 
         # Grab the body
-        return self._rfile.read(content_length)
+        body = self._rfile.read(content_length)
+        if content_length is None:
+            return body
+        chunks = [body]
+        remaining = content_length - len(body)
+        while remaining > 0:
+            chunk = self._rfile.read(remaining)
+            if not chunk:
+                return None
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        return b''.join(chunks)
 
     @staticmethod
     def _content_length(line):

@@ -61,6 +61,35 @@ def test_reader_bad_message(rfile, reader):
     consumer.assert_not_called()
 
 
+@pytest.mark.parametrize('chunk_size', [1, 3, 7, 4096])
+def test_reader_short_body_reads(chunk_size):
+    class ShortReadStream(BytesIO):
+        def read(self, size=-1):
+            return super().read(min(size, chunk_size))
+
+    stream = ShortReadStream()
+    writer = JsonRpcStreamWriter(stream, ensure_ascii=False)
+    messages = [
+        {'id': 1, 'method': 'hello', 'params': {'text': '\u03bb\U0001f30d'}},
+        {'id': 2, 'method': 'bye', 'params': {}},
+    ]
+    for message in messages:
+        writer.write(message)
+    stream.seek(0)
+    received = []
+    JsonRpcStreamReader(stream).listen(received.append)
+    assert received == messages
+
+
+@pytest.mark.parametrize('body', [b'', b'{', b'{}'])
+def test_reader_short_body_at_eof(body):
+    # Even a valid JSON prefix must not be dispatched as a complete frame.
+    stream = BytesIO(b'Content-Length: 10\r\n\r\n' + body)
+    received = []
+    JsonRpcStreamReader(stream).listen(received.append)
+    assert received == []
+
+
 def test_reader_bad_json(rfile, reader):
     rfile.write(
         b'Content-Length: 8\r\n'
