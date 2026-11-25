@@ -105,7 +105,12 @@ class JsonRpcStreamWriter:
                     f"{body}"
                 )
 
-                self._wfile.write(response.encode('utf-8'))
+                remaining = memoryview(response.encode('utf-8'))
+                while remaining:
+                    written = self._wfile.write(remaining)
+                    if written is None or written <= 0:
+                        raise OSError('Output stream made no progress writing a message')
+                    remaining = remaining[written:]
                 self._wfile.flush()
             except Exception:  # pylint: disable=broad-except
                 log.exception("Failed to write message to output file %s", message)
