@@ -92,7 +92,6 @@ class Endpoint:
         def callback(future):
             if future.cancelled():
                 self.notify(CANCEL_METHOD, {'id': request_id})
-                future.set_exception(JsonRpcRequestCancelled())
         return callback
 
     def consume(self, message):
@@ -222,9 +221,6 @@ class Endpoint:
             # Remove the future from the client requests map
             self._client_request_futures.pop(request_id, None)
 
-            if future.cancelled():
-                future.set_exception(JsonRpcRequestCancelled())
-
             message = {
                 'jsonrpc': JSONRPC_VERSION,
                 'id': request_id,
@@ -233,6 +229,8 @@ class Endpoint:
             try:
                 result = future.result()
                 message = self._make_response_payload(message, result)
+            except futures.CancelledError:
+                message['error'] = JsonRpcRequestCancelled().to_dict()
             except JsonRpcException as e:
                 log.exception("Failed to handle request %s", request_id)
                 message['error'] = e.to_dict()
@@ -252,10 +250,14 @@ class Endpoint:
             log.warning("Received response to unknown message id %s", msg_id)
             return
 
-        if error is not None:
-            log.debug("Received error response to message %s: %s", msg_id, error)
-            request_future.set_exception(JsonRpcException.from_dict(error))
-            return
-
-        log.debug("Received result for message %s: %s", msg_id, result)
-        request_future.set_result(result)
+        try:
+            if error is not None:
+                log.debug("Received error response to message %s: %s", msg_id, error)
+                request_future.set_exception(JsonRpcException.from_dict(error))
+            else:
+                log.debug("Received result for message %s: %s", msg_id, result)
+                request_future.set_result(result)
+        except futures.InvalidStateError:
+            # A response can arrive after (or race with) local cancellation.
+            if not request_future.cancelled():
+                raise
