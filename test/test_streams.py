@@ -76,6 +76,21 @@ def test_reader_bad_json(rfile, reader):
     consumer.assert_not_called()
 
 
+@pytest.mark.parametrize('preceding_message', [False, True])
+def test_reader_invalid_length_stops_without_replaying(preceding_message, caplog):
+    stream = BytesIO()
+    writer = JsonRpcStreamWriter(stream)
+    message = {'id': 1, 'method': 'perform_action', 'params': {}}
+    if preceding_message:
+        writer.write(message)
+    stream.write(b'Content-Length: invalid\r\n\r\n{}')
+    stream.seek(0)
+    received = []
+    JsonRpcStreamReader(stream).listen(received.append)
+    assert received == ([message] if preceding_message else [])
+    assert 'Failed to read from rfile' in caplog.text
+
+
 def test_writer(wfile, writer):
     writer.write({
         'id': 'hello',

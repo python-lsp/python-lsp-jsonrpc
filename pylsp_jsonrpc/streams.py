@@ -32,6 +32,7 @@ class JsonRpcStreamReader:
                 if self._rfile.closed:
                     return
                 log.exception("Failed to read from rfile")
+                return
 
             if request_str is None:
                 break
