@@ -319,6 +319,71 @@ def test_consume_request_cancel_unknown(endpoint):
     })
 
 
+def test_cancelled_outgoing_future_does_not_raise_in_callback(endpoint, consumer, caplog):
+    future = endpoint.request('methodName')
+    assert future.cancel()
+    assert future.cancelled()
+    consumer.assert_called_with({
+        'jsonrpc': '2.0',
+        'method': '$/cancelRequest',
+        'params': {'id': MSG_ID}
+    })
+    assert 'exception calling callback' not in caplog.text
+
+
+@pytest.mark.parametrize('response', [
+    {'result': 1234},
+    {'error': exceptions.JsonRpcRequestCancelled().to_dict()},
+])
+def test_cancelled_outgoing_future_ignores_late_response(endpoint, response):
+    future = endpoint.request('methodName')
+    assert future.cancel()
+    endpoint.consume({'jsonrpc': '2.0', 'id': MSG_ID, **response})
+    with pytest.raises(futures.CancelledError):
+        future.result()
+
+    next_future = endpoint.request('methodName')
+    endpoint.consume({'jsonrpc': '2.0', 'id': MSG_ID, 'result': 42})
+    assert next_future.result() == 42
+
+
+@pytest.mark.parametrize('cancel_before_dispatch', [False, True])
+def test_cancelled_incoming_future_sends_error(endpoint, dispatcher, consumer, cancel_before_dispatch):
+    response = futures.Future()
+    dispatcher['methodName'] = lambda _params: response
+    if cancel_before_dispatch:
+        response.cancel()
+    endpoint.consume({'jsonrpc': '2.0', 'id': MSG_ID, 'method': 'methodName'})
+    if not cancel_before_dispatch:
+        endpoint.consume({
+            'jsonrpc': '2.0',
+            'method': '$/cancelRequest',
+            'params': {'id': MSG_ID}
+        })
+
+    assert response.cancelled()
+    consumer.assert_called_once_with({
+        'jsonrpc': '2.0',
+        'id': MSG_ID,
+        'error': exceptions.JsonRpcRequestCancelled().to_dict()
+    })
+
+
+def test_cancelled_running_request_still_sends_result(endpoint, dispatcher, consumer):
+    response = futures.Future()
+    response.set_running_or_notify_cancel()
+    dispatcher['methodName'] = lambda _params: response
+    endpoint.consume({'jsonrpc': '2.0', 'id': MSG_ID, 'method': 'methodName'})
+    endpoint.consume({
+        'jsonrpc': '2.0',
+        'method': '$/cancelRequest',
+        'params': {'id': MSG_ID}
+    })
+    assert not response.cancelled()
+    response.set_result(42)
+    consumer.assert_called_once_with({'jsonrpc': '2.0', 'id': MSG_ID, 'result': 42})
+
+
 def assert_consumer_error(consumer_mock, exception):
     """Assert that the consumer mock has had once call with the given error message and code.
 
